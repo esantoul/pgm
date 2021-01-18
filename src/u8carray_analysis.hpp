@@ -4,8 +4,9 @@
 
 namespace u8an
 {
+  // C++20 definitions
 #if __cplusplus >= 202002L
-    // C++20 (and later) code
+  // C++20 (and later) code
 
   template <typename Callable_t>
   concept Task = std::is_invocable_r_v<bool, Callable_t, const uint8_t* &, std::size_t&>;
@@ -18,6 +19,7 @@ namespace u8an
   
 #endif
 
+  // Process Definition
   template <typename ... Task_t>
 #if __cplusplus >= 202002L
   requires (Task<Task_t> && ...)
@@ -55,6 +57,46 @@ namespace u8an
 
     std::tuple<Task_t...> mT;
   };
+
+  // Tasks Definitions
+
+  template <std::size_t len>
+  constexpr auto CheckLength = [](const uint8_t* bytes, std::size_t length){
+    return length < len;
+  };
+
+  template <std::size_t len>
+  constexpr auto StripBytes = [](const uint8_t* &bytes, std::size_t &length){
+    bytes = length > len ? bytes + len : bytes + length;
+    length = length > len ? length - len : 0;
+    return false;
+  };
+
+  constexpr auto StripStatus = [](const uint8_t* &bytes, std::size_t &length){
+    if (length < 2)
+      return true;
+    ++bytes, length -= 2;
+    return false;
+  };
+
+  template <uint8_t mask>
+  constexpr auto GetFirstByteMask = [](const uint8_t* bytes, std::size_t){
+    return *bytes & mask;
+  };
+
+  constexpr auto GetFirstByte = GetFirstByteMask<0xFF>;
+
+  // Task Utility
+  template <typename Callback_t>
+#if __cplusplus >= 202002L
+    requires Task<Callback_t>
+#endif
+  constexpr auto invertReturnVal(Callback_t c)
+  {
+    return [=](const uint8_t* &bytes, std::size_t& length){
+      return !c(bytes, length);
+    };
+  }
 
   template <typename Fun_t, typename ... Case_t>
 #if __cplusplus >= 202002L
@@ -114,89 +156,33 @@ namespace u8an
     };
   };
 
-}
-
-/*
-
-//////////////////////////////////////////////////////////////////////////////////////
-
-#include <cstdio>
-
-void printsuccess(const uint8_t* bytes, const std::size_t &length)
-{
-  puts("Success");
-}
-
-uint8_t signature[] = {1,2};
-
-std::tuple<bool, const uint8_t*, std::size_t> mymatcher(const uint8_t* bytes, const std::size_t &length)
-{
-  const uint8_t* cpy = bytes;
-  if (length >= 2)
-    for (const auto& el: signature)
-      if (el != *cpy++)
-      {
-        puts("Signature did not match!");
-        return {false, nullptr, 0};
-      }
-  return {true, bytes + 2, length - 2};
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-
-constexpr auto printfirstbyte = [](const uint8_t* bytes, std::size_t length)
-{
-  if (!length)
-    return true;
-  else
-    printf("%d, ", *bytes);
-  return false;
-};
-
-template <std::size_t len>
-constexpr auto strip = [](const uint8_t* &bytes, std::size_t &length){
-  if (length > len)
+  class SwitchHelper
   {
-    bytes += len;
-    length -= len;
-  }
-  else
-  {
-    bytes += length;
-    length = 0;
-  }
-  return false;
-};
+  public:
+    template <typename Tuple_t, typename Fun_t>
+    static constexpr auto MakeFromCaseList(Fun_t switchInputFunction)
+    {
+      return Helper<Tuple_t>(switchInputFunction, std::make_index_sequence<std::tuple_size_v<Tuple_t>>());
+    }
 
-constexpr auto p = u8an::Process{}
-                        << printfirstbyte
-                        << strip<1>
-                        << printfirstbyte
-                        << strip<1>;
+    template <typename Tuple_t, typename Fun_t, typename Default_t>
+    static constexpr auto MakeFromCaseList(Fun_t switchInputFunction, Default_t d)
+    {
+      return Helper<Tuple_t>(switchInputFunction, d, std::make_index_sequence<std::tuple_size_v<Tuple_t>>());
+    }
 
-constexpr auto p2 = p << p << p << p;
+  private:
+    template <typename Tuple_t, typename Fun_t, std::size_t ... idx>
+    static constexpr auto Helper(Fun_t switchInputFunction, std::index_sequence<idx...>)
+    {
+      return Switch{switchInputFunction, Case(std::tuple_element<idx, Tuple_t>::type::value, std::tuple_element<idx, Tuple_t>::type::method)...};
+    }
 
-bool funfun(const uint8_t*, std::size_t);
+    template <typename Tuple_t, typename Default_t, typename Fun_t, std::size_t ... idx>
+    static constexpr auto Helper(Fun_t switchInputFunction, Default_t d, std::index_sequence<idx...>)
+    {
+      return Switch{switchInputFunction, Case(std::tuple_element<idx, Tuple_t>::type::value, std::tuple_element<idx, Tuple_t>::type::method)..., d};
+    }
+  };
 
-using u8an::Switch;
-using u8an::Case;
-using u8an::Default;
-
-constexpr auto myS = Switch { [](const uint8_t* bytes, std::size_t){ return *bytes & 3; },
-  Case(0, [](const uint8_t* bytes, std::size_t){ puts("It's 0!"); return false; }),
-  Case(1, [](const uint8_t* bytes, std::size_t){ puts("It's 1!"); return false; }),
-  //Case(2, funfun),
-  Default([](const uint8_t* bytes, std::size_t){ puts("No match found :("); return false; }),
-};
-
-int main()
-{
-  uint8_t bytes[] = {1, 2, 3, 4, 5};
-  //interpret_customizable(bytes, sizeof(bytes));
-  p2(bytes, sizeof(bytes));
-  puts("");
-  myS(bytes, sizeof(bytes));
-  return 0;
 }
-
-//*/
