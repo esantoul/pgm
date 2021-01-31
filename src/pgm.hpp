@@ -5,7 +5,7 @@
 
 namespace pgm // Process Generation Model
 {
-// C++20 definitions
+  // C++20 definitions
 #if __cplusplus >= 202002L
 #define CPP20_IMPL
   // C++20 (and later) code
@@ -104,14 +104,14 @@ namespace pgm // Process Generation Model
 #ifdef CPP20_IMPL
   requires(Task<Helper::task_ret_t<Proto_t>, Task_t, Helper::args_tuple_t<Proto_t>> &&...)
 #endif
-      class Process
+    class Process
   {
   public:
 #ifdef CPP17_IMPL
     template <typename = std::enable_if_t<std::conjunction_v<is_task<Task_t, Proto_t>...>>>
 #endif
     constexpr Process(Task_t... t)
-        : mT{t...}
+      : mT{ t... }
     {
     }
 
@@ -119,6 +119,12 @@ namespace pgm // Process Generation Model
     constexpr Helper::task_ret_t<Proto_t> operator()(Args_t... args) const
     {
       return execute_tasks(std::make_tuple(args...), std::make_index_sequence<sizeof...(Task_t)>());
+    }
+
+    template <typename New_Task_t>
+    constexpr Process<Proto_t, Task_t..., New_Task_t> append(New_Task_t c) const
+    {
+      return append_helper(c, std::make_index_sequence<sizeof...(Task_t)>());
     }
 
     template <typename New_Task_t>
@@ -131,7 +137,7 @@ namespace pgm // Process Generation Model
     template <typename Other_Callable, std::size_t... idx>
     constexpr Process<Proto_t, Task_t..., Other_Callable> append_helper(Other_Callable c, std::index_sequence<idx...>) const
     {
-      return {std::get<idx>(mT)..., c};
+      return { std::get<idx>(mT)..., c };
     }
 
     template <typename Args_tuple_t, std::size_t... idx>
@@ -154,16 +160,16 @@ namespace pgm // Process Generation Model
 
   template <typename Proto_t, typename CondFun_t, typename DefFun_t, typename... CaseFun_t>
 #ifdef CPP20_IMPL
-      requires Condition<CondFun_t, Helper::args_tuple_t<Proto_t>> && (Task<Helper::task_ret_t<Proto_t>, CaseFun_t, Helper::args_tuple_t<Proto_t>> && ...)
+  requires Condition<CondFun_t, Helper::args_tuple_t<Proto_t>> && (Task<Helper::task_ret_t<Proto_t>, CaseFun_t, Helper::args_tuple_t<Proto_t>> && ...)
 #endif
-                                                                          class Switcher
+    class Switcher
   {
   public:
 #ifdef CPP17_IMPL
     template <typename = std::enable_if_t<std::conjunction_v<is_condition<CondFun_t, Proto_t>, is_task<DefFun_t, Proto_t>, is_task<CaseFun_t, Proto_t>...>>>
 #endif
     constexpr Switcher(Prototype<Proto_t>, CondFun_t cond, DefFun_t def, std::pair<Helper::cond_ret_t<CondFun_t, Proto_t>, CaseFun_t>... cases)
-        : mCFun{cond}, mDFun{def}, mCVals{cases.first...}, mCFuns{cases.second...}
+      : mCFun{ cond }, mDFun{ def }, mCVals{ cases.first... }, mCFuns{ cases.second... }
     {
     }
 
@@ -175,7 +181,7 @@ namespace pgm // Process Generation Model
     constexpr Helper::task_ret_t<Proto_t> visit_cases(Helper::args_tuple_t<Proto_t> args_tuple, std::index_sequence<idx...>) const
     {
       Helper::task_ret_t<Proto_t> ret{};
-      const Helper::cond_ret_t<CondFun_t, Proto_t> condition{std::apply(mCFun, args_tuple)};
+      const Helper::cond_ret_t<CondFun_t, Proto_t> condition{ std::apply(mCFun, args_tuple) };
       if (((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || (true)))) || ...))
         return ret;
       else
@@ -214,7 +220,7 @@ public:
   static constexpr auto Interpreter(CondFun_t cf)
   {
     return InterpreterHelper<Proto_t, CaseTuple_t>(
-        cf, [](auto...) -> pgm::Helper::task_ret_t<Proto_t> { return {}; }, std::make_index_sequence<std::tuple_size_v<CaseTuple_t>>());
+      cf, [](auto...) -> pgm::Helper::task_ret_t<Proto_t> { return {}; }, std::make_index_sequence<std::tuple_size_v<CaseTuple_t>>());
   }
 
 private:
@@ -227,7 +233,7 @@ private:
         df,
         std::make_pair(
             std::tuple_element_t<case_idx, CaseTuple_t>::value,
-            std::tuple_element_t<case_idx, CaseTuple_t>::method)...};
+            std::tuple_element_t<case_idx, CaseTuple_t>::method)... };
   }
 };
 
@@ -264,7 +270,7 @@ constexpr auto GetFirstByte = GetFirstByteMask<0xFF>;
 ////////////////////////////////////////////////////////////////////////////////////
 //--------------------------------------------------------------------------------//
 
-/*         SWITCH FOR MIDI Message analysis / Process return type demo
+//*         SWITCH FOR MIDI Message analysis / Process return type demo
 
 //--------------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////////
@@ -356,24 +362,29 @@ struct MidiBytes : NotInstantiable
 
       private:
         using CaseList = std::tuple<
-            SampleDumpHeader,
-            SampleDataPacket,
-            SampleDumpRequest,
-            MidiTimeCode,
-            SampleDumpExtensions,
-            GeneralInformation,
-            FileDump,
-            MidiTuningStandard,
-            GeneralMidi,
-            EndOfFile,
-            Wait,
-            Cancel,
-            NAK,
-            ACK>;
+          SampleDumpHeader,
+          SampleDataPacket,
+          SampleDumpRequest,
+          MidiTimeCode,
+          SampleDumpExtensions,
+          GeneralInformation,
+          FileDump,
+          MidiTuningStandard,
+          GeneralMidi,
+          EndOfFile,
+          Wait,
+          Cancel,
+          NAK,
+          ACK>;
 
       public:
         static constexpr uint8_t value = 0x7E;
-        static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << StripBytes<1> << CheckLength<1> << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(GetByteMask<1, 0xFF>);
+        static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+          << StripBytes<1>
+          << CheckLength<1>
+          << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+            GetByteMask<1, 0xFF>,
+            [](auto...) { return true; });
       };
 
       struct UniRT : NotInstantiable
@@ -384,8 +395,8 @@ struct MidiBytes : NotInstantiable
 
     private:
       using CaseList = std::tuple<
-          UniNonRT,
-          UniRT>;
+        UniNonRT,
+        UniRT>;
 
     public:
       // @return false if there is a match else true
@@ -393,7 +404,12 @@ struct MidiBytes : NotInstantiable
       static bool interpretSpecificSysEx(const uint8_t *, std::size_t lenght);
       static constexpr uint8_t value = 0xF0;
       static constexpr auto method =
-          pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << StripStatus << CheckLength<1> << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(GetFirstByte, pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << specificMatchFunction << interpretSpecificSysEx);
+        pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+        << StripStatus
+        << CheckLength<1>
+        << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+          GetFirstByte,
+          pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << specificMatchFunction << interpretSpecificSysEx);
     };
     struct MTC : NotInstantiable
     {
@@ -449,32 +465,36 @@ struct MidiBytes : NotInstantiable
 
   private:
     using CaseList = std::tuple<
-        SysEx,
-        MTC,
-        Songpos,
-        SongSel,
-        Tune,
-        Clock,
-        Start,
-        Continue,
-        Stop,
-        ActiveSensing,
-        SystemReset>;
+      SysEx,
+      MTC,
+      Songpos,
+      SongSel,
+      Tune,
+      Clock,
+      Start,
+      Continue,
+      Stop,
+      ActiveSensing,
+      SystemReset>;
 
   public:
     static constexpr uint8_t value = 0xF0;
-    static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
-                                       GetFirstByte,
-                                       [](auto...) { return true; });
+    static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+      << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+        GetFirstByte,
+        [](auto...) { return true; });
   };
 
 private:
   using CaseList = std::tuple<
-      SystemMessage>;
+    SystemMessage>;
 
 public:
-  static constexpr auto Interpret =
-      pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << CheckLength<1> << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(GetFirstByteMask<0xF0>, [](auto...) { return true; });
+  static constexpr auto Interpret = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+    << CheckLength<1>
+    << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+      GetFirstByteMask<0xF0>,
+      [](auto...) { return true; });
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -632,7 +652,7 @@ bool MidiBytes::SystemMessage::SystemReset::method(const uint8_t *bytes, std::si
 int main()
 {
   //uint8_t bytes[] = {0xF0, 0x7E, 0x69, 0x07, 0x03, 0x42, 'B', 'I', 'N', ' ', 'e', 'r', 'a', 'e', '_', 't', 'o', 'u', 'c', 'h', '_', 's', 'o', 'f', 't', 0xF7};
-  uint8_t bytes[] = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
+  uint8_t bytes[] = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
   MidiBytes::Interpret(bytes, std::size(bytes));
   return 0;
 }
@@ -663,13 +683,13 @@ struct C_C
 using CaseList = std::tuple<C_A, C_B, C_C>;
 
 constexpr auto mySwitcher = SwitcherMaker::Interpreter<int(const uint8_t *, std::size_t), CaseList>(
-    mycond,
-    mydefault);
+  mycond,
+  mydefault);
 
 constexpr auto p = pgm::Process<int(const uint8_t *&, std::size_t &)>{}
-                   << [](const uint8_t *, std::size_t length) -> std::optional<int> { if (length < 2) return -1; return {}; }
-                                                                     << [](const uint8_t *&bytes, std::size_t &length) -> std::optional<int> { bytes++, length--; return {}; }
-                                                                                                                              << mySwitcher;
+<< [](const uint8_t *, std::size_t length) -> std::optional<int> { if (length < 2) return -1; return {}; }
+<< [](const uint8_t *&bytes, std::size_t &length) -> std::optional<int> { bytes++, length--; return {}; }
+<< mySwitcher;
 
 std::optional<int> szf(const uint8_t *bytes, std::size_t length)
 {
@@ -683,12 +703,12 @@ enum class EN
   yellow
 };
 
-constexpr std::uint8_t vall = 10;
-
 using tested_t = bool;
 
 int main()
 {
+  (void)StripStatus;
+  (void)GetFirstByte;
   std::uint8_t bb[6];
   return szf(bb, sizeof(bb)).value_or(-99);
 }
