@@ -25,7 +25,7 @@ public:
   static constexpr auto Interpreter(CondFun_t cf)
   {
     return InterpreterHelper<Proto_t, CaseTuple_t>(
-      cf, [](auto...) -> pgm::Helper::task_ret_t<Proto_t> { return {}; }, std::make_index_sequence<std::tuple_size_v<CaseTuple_t>>());
+      cf, [](auto...) -> pgm::Helper::ret_t<Proto_t> { return {}; }, std::make_index_sequence<std::tuple_size_v<CaseTuple_t>>());
   }
 
 private:
@@ -683,6 +683,8 @@ int main()
 
 /*/
 
+#include <optional>
+
 constexpr auto mycond = [](const uint8_t *, std::size_t length) -> std::size_t { return length; };
 constexpr auto mydefault = [](const uint8_t *, std::size_t length) -> std::optional<int> { if (length < 12) return length; return {}; };
 
@@ -706,11 +708,11 @@ struct C_C
 
 using CaseList = std::tuple<C_A, C_B, C_C>;
 
-constexpr auto mySwitcher = SwitcherMaker::Interpreter<int(const uint8_t *, std::size_t), CaseList>(
+constexpr auto mySwitcher = SwitcherMaker::Interpreter<std::optional<int>(const uint8_t *, std::size_t), CaseList>(
   mycond,
   mydefault);
 
-constexpr auto p = pgm::Process<int(const uint8_t *&, std::size_t &)>{}
+constexpr auto p = pgm::Process<std::optional<int>(const uint8_t *&, std::size_t &)>{}
 << [](const uint8_t *, std::size_t length) -> std::optional<int> { if (length < 2) return -1; return {}; }
 << [](const uint8_t *&bytes, std::size_t &length) -> std::optional<int> { bytes++, length--; return {}; }
 << mySwitcher;
