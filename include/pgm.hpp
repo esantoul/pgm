@@ -38,7 +38,7 @@ namespace pgm // Process Generation Model
   template <typename Ret_t, typename ... Args_t>
   struct is_conditional_return<Ret_t(Args_t...)>
   {
-    static constexpr bool value = std::is_convertible_v<bool, Ret_t>;
+    static constexpr bool value = std::is_convertible_v<Ret_t, bool>;
   };
 
   template <typename Proto_t>
@@ -110,7 +110,7 @@ namespace pgm // Process Generation Model
     template <typename = std::enable_if_t<std::conjunction_v<is_conditional_return<Proto_t>, is_task<Task_t, Proto_t>...>>>
 #endif
     constexpr Process(Task_t... t)
-      : mT{ t... }
+      : mT{t...}
     {
     }
 
@@ -147,7 +147,7 @@ namespace pgm // Process Generation Model
     template <typename Other_Callable, std::size_t... idx>
     constexpr Process<Proto_t, Task_t..., Other_Callable> append_helper(Other_Callable c, std::index_sequence<idx...>) const
     {
-      return { std::get<idx>(mT)..., c };
+      return {std::get<idx>(mT)..., c};
     }
 
     template <typename Args_tuple_t, std::size_t... idx>
@@ -179,7 +179,7 @@ namespace pgm // Process Generation Model
     template <typename = std::enable_if_t<std::conjunction_v<is_condition<CondFun_t, Proto_t>, is_task<DefFun_t, Proto_t>, is_task<CaseFun_t, Proto_t>...>>>
 #endif
     constexpr Switcher(Prototype<Proto_t>, CondFun_t cond, DefFun_t def, std::pair<Helper::cond_ret_t<CondFun_t, Proto_t>, CaseFun_t>... cases)
-      : mCFun{ cond }, mDFun{ def }, mCVals{ cases.first... }, mCFuns{ cases.second... }
+      : mCFun{cond}, mDFun{def}, mCVals{cases.first...}, mCFuns{cases.second...}
     {
     }
 
@@ -191,7 +191,7 @@ namespace pgm // Process Generation Model
     constexpr Helper::ret_t<Proto_t> visit_cases(Helper::args_tuple_t<Proto_t> args_tuple, std::index_sequence<idx...>) const
     {
       Helper::ret_t<Proto_t> ret{};
-      const Helper::cond_ret_t<CondFun_t, Proto_t> condition{ std::apply(mCFun, args_tuple) };
+      const Helper::cond_ret_t<CondFun_t, Proto_t> condition{std::apply(mCFun, args_tuple)};
       if (((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || (true)))) || ...))
         return ret;
       else
