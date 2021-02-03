@@ -47,15 +47,18 @@ enum class PARSE_STATUS
 {
   UNDEFINED = 0,
   SUCCESS,
-  ERROR
+  ERROR_UNKNOWN,
+  ERROR_MSG_TOO_SHORT,
+  ERROR_UNADEQUATE_LENGTH,
+  ERROR_INVALID_CASE,
 };
 
-using PInfo = info_descr<PARSE_STATUS>;
+using PInfo = info<PARSE_STATUS>;
 
 // Tasks Definitions
 template <std::size_t len>
 constexpr auto CheckLength = [](const uint8_t *, std::size_t length) -> PInfo {
-  return length < len ? PInfo{PInfo::E::ERROR, "Msg too short"} : PInfo{};
+  return length < len ? PInfo{PInfo::E::ERROR_MSG_TOO_SHORT} : PInfo{};
 };
 
 template <std::size_t len>
@@ -72,7 +75,7 @@ constexpr auto StripBytes = [](const uint8_t *&bytes, std::size_t &length) -> PI
 
 constexpr auto StripStatus = [](const uint8_t *&bytes, std::size_t &length) -> PInfo {
   if (length < 2)
-    return {PInfo::E::ERROR, "Msg too short"};
+    return {PInfo::E::ERROR_MSG_TOO_SHORT};
   ++bytes, length -= 2;
   return {};
 };
@@ -248,7 +251,7 @@ struct MidiBytes : NotInstantiable
             << CheckLength<2>
             << SwitcherMaker::Interpreter<PInfo(const uint8_t *, std::size_t), CaseList>(
               GetByteMask<1, 0xFF>,
-              [](auto...) { return PInfo{PInfo::E::ERROR, "Invalid case"}; });
+              [](auto...) { return PInfo{PInfo::E::ERROR_INVALID_CASE}; });
         };
 
         struct UniRT : NotInstantiable
@@ -312,7 +315,7 @@ struct MidiBytes : NotInstantiable
             << CheckLength<2>
             << SwitcherMaker::Interpreter<PInfo(const uint8_t *, std::size_t), CaseList>(
               GetByteMask<1, 0xFF>,
-              [](auto...) { return PInfo{PInfo::E::ERROR, "Invalid case"}; });
+              [](auto...) { return PInfo{PInfo::E::ERROR_INVALID_CASE}; });
         };
 
       private:
@@ -404,7 +407,7 @@ struct MidiBytes : NotInstantiable
       static constexpr auto method = pgm::Process<PInfo(const uint8_t *&, std::size_t &)>{}
         << SwitcherMaker::Interpreter<PInfo(const uint8_t *, std::size_t), CaseList>(
           GetFirstByte,
-          [](auto...) { return PInfo{PInfo::E::ERROR, "Invalid case"}; });
+          [](auto...) { return PInfo{PInfo::E::ERROR_INVALID_CASE}; });
     };
 
   private:
@@ -422,14 +425,14 @@ struct MidiBytes : NotInstantiable
     static constexpr std::uint8_t value = 0x80;
     static constexpr auto method = SwitcherMaker::Interpreter<PInfo(const uint8_t *, std::size_t), CaseList>(
       GetFirstByteMask<0xF0>,
-      [](auto...) { return PInfo{PInfo::E::ERROR, "Invalid case"}; });
+      [](auto...) { return PInfo{PInfo::E::ERROR_INVALID_CASE}; });
   };
 
   struct M2 : NotInstantiable
   {
   public:
     static constexpr std::uint8_t value = 0x00;
-    static constexpr auto method = [](auto...) {return PInfo{PInfo::E::ERROR, "MIDI2 not impl"};};
+    static constexpr auto method = [](auto...) {return PInfo{PInfo::E::ERROR_INVALID_CASE};};
   };
 
 private:
@@ -442,15 +445,15 @@ public:
     << CheckLength<1>
     << SwitcherMaker::Interpreter<PInfo(const uint8_t *, std::size_t), CaseList>(
       GetFirstByteMask<0x80>,
-      [](auto...) { return PInfo{PInfo::E::ERROR, "Invalid case"}; });
+      [](auto...) { return PInfo{PInfo::E::ERROR_INVALID_CASE}; });
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-PInfo analyzer(const uint8_t *bytes, std::size_t length)
-{
-  return MidiBytes::Interpret(bytes, length);
-}
+// PInfo analyzer(const uint8_t *bytes, std::size_t length)
+// {
+//   return MidiBytes::Interpret(bytes, length);
+// }
 
 #include <cstdio>
 void prtrem(const char *description, const uint8_t *bytes, std::size_t len)
@@ -464,49 +467,49 @@ void prtrem(const char *description, const uint8_t *bytes, std::size_t len)
 PInfo MidiBytes::M1::NoteOn::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 3"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("NoteOn", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::NoteOff::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 3"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("NoteOff", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::PolyPressure::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 3"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("PolyPressure", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::ControlChange::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 3"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("ControlChange", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::ProgramChange::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<2>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 2"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("ProgramChange", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::ChannelPressure::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<2>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 2"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("ChannelPressure", bytes, length);
   return {PInfo::E::SUCCESS};
 }
 PInfo MidiBytes::M1::PitchBend::method(const uint8_t *bytes, std::size_t length)
 {
   if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR, "Length != 3"};
+    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
   prtrem("PitchBend", bytes, length);
   return {PInfo::E::SUCCESS};
 }
@@ -681,13 +684,78 @@ PInfo MidiBytes::M1::SystemMessage::SystemReset::method(const uint8_t *bytes, st
   return {PInfo::E::SUCCESS};
 }
 
-int main()
+#include <cstring>
+#include <vector>
+#include <optional>
+
+std::optional<uint8_t> char2hex(signed char c)
+{
+  if (c >= 'a' && c <= 'f')
+    c += 'A' - 'a';
+  if ((c >= '0' && c <= '9'))
+    return c - '0';
+  else if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  else
+    return {};
+}
+
+std::optional<uint8_t> parse2char(const char str[])
+{
+  auto mshB = char2hex(str[0]);
+  auto lshB = char2hex(str[1]);
+  if (mshB && lshB)
+    return mshB.value() << 4 | lshB.value();
+  else
+    return {};
+}
+
+std::optional<std::vector<uint8_t>> parse_args(const int argc, const char *argv[])
+{
+  std::vector<uint8_t> bytes;
+  for (int i = 0; i < argc; ++i)
+  {
+    auto len = strlen(argv[i]);
+    if ((len != 2) && (len != 4))
+      return {};
+    std::optional<uint8_t> num;
+    if (len == 2)
+      num = parse2char(argv[i]);
+    else
+      num = parse2char(argv[i] + 2);
+    if (num)
+      bytes.push_back(num.value());
+    else
+      return {};
+  }
+  if (bytes.size())
+    return bytes;
+  else
+    return {};
+}
+
+int main(int argc, const char *argv[])
 {
   // uint8_t bytes[] = {0xF0, 0x7E, 0x69, 0x07, 0x03, 0x42, 'B', 'I', 'N', ' ', 'e', 'r', 'a', 'e', '_', 't', 'o', 'u', 'c', 'h', '_', 's', 'o', 'f', 't', 0xF7};
-  uint8_t bytes[] = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
+  // uint8_t bytes[] = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
   // uint8_t bytes[] = {0x94, 0x40, 0x7F};
   // uint8_t bytes[] = {0xF0, 0x7F, 0x69, 0x04, 0x01, 0x00, 0x00, 0xF7};
-  PInfo ret = MidiBytes::Interpret(bytes, sizeof(bytes));
+
+  auto parsed = parse_args(argc - 1, argv + 1);
+  if (!parsed)
+  {
+    printf("Invalid input\n");
+    return 0;
+  }
+
+  printf("Input data: \n");
+  for (const auto &el : parsed.value())
+    printf("%02X ", el);
+  printf("\n");
+
+  PInfo ret = MidiBytes::Interpret(parsed.value().data(), parsed.value().size());
+
+  // PInfo ret = MidiBytes::Interpret(bytes, sizeof(bytes));
   switch (ret.status())
   {
   case PInfo::E::UNDEFINED:
@@ -696,9 +764,20 @@ int main()
   case PInfo::E::SUCCESS:
     printf("Message parsed successfully!\n");
     break;
-  case PInfo::E::ERROR:
-    printf("Error: %s\n", ret.description());
+  case PInfo::E::ERROR_MSG_TOO_SHORT:
+    printf("Error: Message is too short\n");
+    break;
+  case PInfo::E::ERROR_UNADEQUATE_LENGTH:
+    printf("Error: Unadequate length\n");
+    break;
+  case PInfo::E::ERROR_UNKNOWN:
+    printf("Error: UNKNOWN\n");
+    break;
+  case PInfo::E::ERROR_INVALID_CASE:
+    printf("Error: Invalid Case\n");
+    break;
   }
+
   return 0;
 }
 
