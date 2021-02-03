@@ -1,4 +1,5 @@
 #include "../include/pgm.hpp"
+#include "optional_w.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////
 //--------------------------------------------------------------------------------//
@@ -38,33 +39,42 @@ private:
         df,
         std::make_pair(
             std::tuple_element_t<case_idx, CaseTuple_t>::value,
-            std::tuple_element_t<case_idx, CaseTuple_t>::method)... };
+            std::tuple_element_t<case_idx, CaseTuple_t>::method)...};
   }
 };
 
+enum class PARSE_STATUS
+{
+  UNDEFINED = 0,
+  SUCCESS,
+  ERROR
+};
+
+using Parse_info = info_descr<PARSE_STATUS>;
+
 // Tasks Definitions
 template <std::size_t len>
-constexpr auto CheckLength = [](const uint8_t *, std::size_t length) {
-  return length < len;
+constexpr auto CheckLength = [](const uint8_t *, std::size_t length) -> Parse_info {
+  return length < len ? Parse_info{PARSE_STATUS::ERROR, "Msg too short"} : Parse_info{};
 };
 
 template <std::size_t len>
-constexpr auto HasLength = [](const uint8_t *, std::size_t length) {
+constexpr auto HasLength = [](const uint8_t *, std::size_t length) -> bool {
   return length == len;
 };
 
 template <std::size_t len>
-constexpr auto StripBytes = [](const uint8_t *&bytes, std::size_t &length) {
+constexpr auto StripBytes = [](const uint8_t *&bytes, std::size_t &length) -> Parse_info {
   bytes = length > len ? bytes + len : bytes + length;
   length = length > len ? length - len : 0;
-  return false;
+  return {};
 };
 
-constexpr auto StripStatus = [](const uint8_t *&bytes, std::size_t &length) {
+constexpr auto StripStatus = [](const uint8_t *&bytes, std::size_t &length) -> Parse_info {
   if (length < 2)
-    return true;
+    return {PARSE_STATUS::ERROR, "Msg too short"};
   ++bytes, length -= 2;
-  return false;
+  return {};
 };
 
 template <std::size_t idx, uint8_t mask>
@@ -88,7 +98,7 @@ constexpr auto GetFirstByte = GetFirstByteMask<0xFF>;
 struct NotInstantiable
 {
 private:
-  constexpr NotInstantiable() { }
+  constexpr NotInstantiable() {}
 };
 struct MidiBytes : NotInstantiable
 {
@@ -97,43 +107,43 @@ struct MidiBytes : NotInstantiable
     struct NoteOff : NotInstantiable
     {
       static constexpr std::uint8_t value = 0x80;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct NoteOn : NotInstantiable
     {
       static constexpr std::uint8_t value = 0x90;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct PolyPressure : NotInstantiable
     {
       static constexpr std::uint8_t value = 0xA0;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct ControlChange : NotInstantiable
     {
       static constexpr std::uint8_t value = 0xB0;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct ProgramChange : NotInstantiable
     {
       static constexpr std::uint8_t value = 0xC0;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct ChannelPressure : NotInstantiable
     {
       static constexpr std::uint8_t value = 0xD0;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct PitchBend : NotInstantiable
     {
       static constexpr std::uint8_t value = 0xE0;
-      static bool method(const uint8_t *bytes, std::size_t length);
+      static Parse_info method(const uint8_t *bytes, std::size_t length);
     };
 
     struct SystemMessage : NotInstantiable
@@ -146,72 +156,72 @@ struct MidiBytes : NotInstantiable
           struct SampleDumpHeader : NotInstantiable
           {
             static constexpr uint8_t value = 0x01;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct SampleDataPacket : NotInstantiable
           {
             static constexpr uint8_t value = 0x02;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct SampleDumpRequest : NotInstantiable
           {
             static constexpr uint8_t value = 0x03;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct MidiTimeCode : NotInstantiable
           {
             static constexpr uint8_t value = 0x04;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct SampleDumpExtensions : NotInstantiable
           {
             static constexpr uint8_t value = 0x05;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct GeneralInformation : NotInstantiable
           {
             static constexpr uint8_t value = 0x06;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct FileDump : NotInstantiable
           {
             static constexpr uint8_t value = 0x07;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct MidiTuningStandard : NotInstantiable
           {
             static constexpr uint8_t value = 0x08;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct GeneralMidi : NotInstantiable
           {
             static constexpr uint8_t value = 0x09;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct EndOfFile : NotInstantiable
           {
             static constexpr uint8_t value = 0x7B;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct Wait : NotInstantiable
           {
             static constexpr uint8_t value = 0x7C;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct Cancel : NotInstantiable
           {
             static constexpr uint8_t value = 0x7D;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct NAK : NotInstantiable
           {
             static constexpr uint8_t value = 0x7E;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct ACK : NotInstantiable
           {
             static constexpr uint8_t value = 0x7F;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
 
         private:
@@ -233,12 +243,12 @@ struct MidiBytes : NotInstantiable
 
         public:
           static constexpr uint8_t value = 0x7E;
-          static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+          static constexpr auto method = pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{}
             << StripBytes<1>
             << CheckLength<2>
-            << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+            << SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
               GetByteMask<1, 0xFF>,
-              [](auto...) { return true; });
+              [](auto...) { return Parse_info{PARSE_STATUS::ERROR, "Invalid case"}; });
         };
 
         struct UniRT : NotInstantiable
@@ -246,42 +256,42 @@ struct MidiBytes : NotInstantiable
           struct MidiTimeCode : NotInstantiable
           {
             static constexpr uint8_t value = 0x01;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct ShowControls : NotInstantiable
           {
             static constexpr uint8_t value = 0x02;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct NotationInfo : NotInstantiable
           {
             static constexpr uint8_t value = 0x03;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct DeviceControl : NotInstantiable
           {
             static constexpr uint8_t value = 0x04;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct RTMTCCue : NotInstantiable
           {
             static constexpr uint8_t value = 0x05;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct MMCCommands : NotInstantiable
           {
             static constexpr uint8_t value = 0x06;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct MMCResponse : NotInstantiable
           {
             static constexpr uint8_t value = 0x07;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
           struct MidiTuning : NotInstantiable
           {
             static constexpr uint8_t value = 0x08;
-            static bool method(const uint8_t *, std::size_t);
+            static Parse_info method(const uint8_t *, std::size_t);
           };
 
         private:
@@ -297,12 +307,12 @@ struct MidiBytes : NotInstantiable
 
         public:
           static constexpr uint8_t value = 0x7F;
-          static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+          static constexpr auto method = pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{}
             << StripBytes<1>
             << CheckLength<2>
-            << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+            << SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
               GetByteMask<1, 0xFF>,
-              [](auto...) { return true; });
+              [](auto...) { return Parse_info{PARSE_STATUS::ERROR, "Invalid case"}; });
         };
 
       private:
@@ -312,67 +322,67 @@ struct MidiBytes : NotInstantiable
 
       public:
         // @return false if there is a match else true
-        static bool specificMatchFunction(const uint8_t *&, std::size_t &);
-        static bool interpretSpecificSysEx(const uint8_t *, std::size_t lenght);
+        static Parse_info specificMatchFunction(const uint8_t *&, std::size_t &);
+        static Parse_info interpretSpecificSysEx(const uint8_t *, std::size_t lenght);
         static constexpr uint8_t value = 0xF0;
         static constexpr auto method =
-          pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+          pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{}
           << StripStatus
           << CheckLength<1>
-          << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+          << SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
             GetFirstByte,
-            pgm::Process<bool(const uint8_t *&, std::size_t &)>{} << specificMatchFunction << interpretSpecificSysEx);
+            pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{} << specificMatchFunction << interpretSpecificSysEx);
       };
       struct MTC : NotInstantiable
       {
         static constexpr uint8_t value = 0xF1;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct Songpos : NotInstantiable
       {
         static constexpr uint8_t value = 0xF2;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct SongSel : NotInstantiable
       {
         static constexpr uint8_t value = 0xF3;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct Tune : NotInstantiable
       {
         static constexpr uint8_t value = 0xF6;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       // System Real Time
       struct Clock : NotInstantiable
       {
         static constexpr uint8_t value = 0xF8;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct Start : NotInstantiable
       {
         static constexpr uint8_t value = 0xFA;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct Continue : NotInstantiable
       {
         static constexpr uint8_t value = 0xFB;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct Stop : NotInstantiable
       {
         static constexpr uint8_t value = 0xFC;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct ActiveSensing : NotInstantiable
       {
         static constexpr uint8_t value = 0xFE;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
       struct SystemReset : NotInstantiable
       {
         static constexpr uint8_t value = 0xFF;
-        static bool method(const uint8_t *, std::size_t);
+        static Parse_info method(const uint8_t *, std::size_t);
       };
 
     private:
@@ -391,10 +401,10 @@ struct MidiBytes : NotInstantiable
 
     public:
       static constexpr uint8_t value = 0xF0;
-      static constexpr auto method = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
-        << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+      static constexpr auto method = pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{}
+        << SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
           GetFirstByte,
-          [](auto...) { return true; });
+          [](auto...) { return Parse_info{PARSE_STATUS::ERROR, "Invalid case"}; });
     };
 
   private:
@@ -410,16 +420,16 @@ struct MidiBytes : NotInstantiable
 
   public:
     static constexpr std::uint8_t value = 0x80;
-    static constexpr auto method = SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+    static constexpr auto method = SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
       GetFirstByteMask<0xF0>,
-      [](auto...) {return true;});
+      [](auto...) { return Parse_info{PARSE_STATUS::ERROR, "Invalid case"}; });
   };
 
   struct M2 : NotInstantiable
   {
   public:
     static constexpr std::uint8_t value = 0x00;
-    static constexpr auto method = [](auto...) {return true;};
+    static constexpr auto method = [](auto...) {return Parse_info{PARSE_STATUS::ERROR, "MIDI2 not impl"};};
   };
 
 private:
@@ -428,16 +438,16 @@ private:
     M2>;
 
 public:
-  static constexpr auto Interpret = pgm::Process<bool(const uint8_t *&, std::size_t &)>{}
+  static constexpr auto Interpret = pgm::Process<Parse_info(const uint8_t *&, std::size_t &)>{}
     << CheckLength<1>
-    << SwitcherMaker::Interpreter<bool(const uint8_t *, std::size_t), CaseList>(
+    << SwitcherMaker::Interpreter<Parse_info(const uint8_t *, std::size_t), CaseList>(
       GetFirstByteMask<0x80>,
-      [](auto...) { return true; });
+      [](auto...) { return Parse_info{PARSE_STATUS::ERROR, "Invalid case"}; });
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-bool analyzer(const uint8_t *bytes, std::size_t length)
+Parse_info analyzer(const uint8_t *bytes, std::size_t length)
 {
   return MidiBytes::Interpret(bytes, length);
 }
@@ -451,233 +461,244 @@ void prtrem(const char *description, const uint8_t *bytes, std::size_t len)
   std::printf("\n");
 }
 
-bool MidiBytes::M1::NoteOn::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::NoteOn::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<3>(bytes, length))
-    return true;
+  if (!HasLength<3>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 3"};
   prtrem("NoteOn", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::NoteOff::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::NoteOff::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<3>(bytes, length))
-    return true;
+  if (!HasLength<3>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 3"};
   prtrem("NoteOff", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::PolyPressure::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::PolyPressure::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<3>(bytes, length))
-    return true;
+  if (!HasLength<3>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 3"};
   prtrem("PolyPressure", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::ControlChange::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::ControlChange::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<3>(bytes, length))
-    return true;
+  if (!HasLength<3>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 3"};
   prtrem("ControlChange", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::ProgramChange::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::ProgramChange::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<2>(bytes, length))
-    return true;
+  if (!HasLength<2>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 2"};
   prtrem("ProgramChange", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::ChannelPressure::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::ChannelPressure::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<2>(bytes, length))
-    return true;
+  if (!HasLength<2>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 2"};
   prtrem("ChannelPressure", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::PitchBend::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::PitchBend::method(const uint8_t *bytes, std::size_t length)
 {
-  if (HasLength<3>(bytes, length))
-    return true;
+  if (!HasLength<3>(bytes, length))
+    return {PARSE_STATUS::ERROR, "Length != 3"};
   prtrem("PitchBend", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpHeader::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpHeader::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SampleDumpHeader", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDataPacket::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDataPacket::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SampleDataPacket", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpRequest::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpRequest::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SampleDumpRequest", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("NRT_MidiTimeCode", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpExtensions::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpExtensions::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SampleDumpExtensions", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralInformation::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralInformation::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("GeneralInformation", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::FileDump::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::FileDump::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("FileDump", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTuningStandard::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTuningStandard::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("MidiTuningStandard", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralMidi::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralMidi::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("GeneralMidi", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::EndOfFile::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::EndOfFile::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("EndOfFile", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Wait::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Wait::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Wait", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Cancel::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Cancel::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Cancel", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::NAK::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::NAK::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("NAK", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniNonRT::ACK::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniNonRT::ACK::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("ACK", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("RT_MidiTimeCode", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::ShowControls::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::ShowControls::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("ShowControls", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::NotationInfo::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::NotationInfo::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("NotationInfo", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::DeviceControl::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::DeviceControl::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("DeviceControl", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::RTMTCCue::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::RTMTCCue::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("RTMTCCue", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCCommands::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCCommands::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("MMCCommands", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCResponse::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCResponse::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("MMCResponse", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTuning::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTuning::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("MidiTuning", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::specificMatchFunction(const uint8_t *&bytes, std::size_t &length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::specificMatchFunction(const uint8_t *&bytes, std::size_t &length)
 {
   prtrem("specificMatchFunction", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SysEx::interpretSpecificSysEx(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SysEx::interpretSpecificSysEx(const uint8_t *bytes, std::size_t length)
 {
   prtrem("interpretSpecificSysEx", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::MTC::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::MTC::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("MTC", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Songpos::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Songpos::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Songpos", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SongSel::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SongSel::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SongSel", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Tune::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Tune::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Tune", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Clock::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Clock::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Clock", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Start::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Start::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Start", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Continue::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Continue::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Continue", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::Stop::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::Stop::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("Stop", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::ActiveSensing::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::ActiveSensing::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("ActiveSensing", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
-bool MidiBytes::M1::SystemMessage::SystemReset::method(const uint8_t *bytes, std::size_t length)
+Parse_info MidiBytes::M1::SystemMessage::SystemReset::method(const uint8_t *bytes, std::size_t length)
 {
   prtrem("SystemReset", bytes, length);
-  return true;
+  return {PARSE_STATUS::SUCCESS};
 }
 
 int main()
 {
-  //uint8_t bytes[] = { 0xF0, 0x7E, 0x69, 0x07, 0x03, 0x42, 'B', 'I', 'N', ' ', 'e', 'r', 'a', 'e', '_', 't', 'o', 'u', 'c', 'h', '_', 's', 'o', 'f', 't', 0xF7 };
-  // uint8_t bytes[] = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
-  // uint8_t bytes[] = { 0x94, 0x40, 0x7F };
-  uint8_t bytes[] = { 0xF0, 0x7F, 0x69, 0x04, 0x01, 0x00, 0x00, 0xF7 };
-  MidiBytes::Interpret(bytes, sizeof(bytes));
+  // uint8_t bytes[] = {0xF0, 0x7E, 0x69, 0x07, 0x03, 0x42, 'B', 'I', 'N', ' ', 'e', 'r', 'a', 'e', '_', 't', 'o', 'u', 'c', 'h', '_', 's', 'o', 'f', 't', 0xF7};
+  uint8_t bytes[] = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
+  // uint8_t bytes[] = {0x94, 0x40, 0x7F};
+  // uint8_t bytes[] = {0xF0, 0x7F, 0x69, 0x04, 0x01, 0x00, 0x00, 0xF7};
+  Parse_info ret = MidiBytes::Interpret(bytes, sizeof(bytes));
+  switch (ret.status())
+  {
+  case PARSE_STATUS::UNDEFINED:
+    printf("Undefined return status\n");
+    break;
+  case PARSE_STATUS::SUCCESS:
+    printf("Message parsed successfully!\n");
+    break;
+  case PARSE_STATUS::ERROR:
+    printf("Error: %s\n", ret.description());
+  }
   return 0;
 }
 
