@@ -194,7 +194,7 @@ namespace pgm // Process Generation Model
       const Helper::cond_ret_t<CondFun_t, Proto_t> condition{std::apply(mCFun, args_tuple)};
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses" // due to a bug in GCC versions < 9.3
-      if (((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || true))) || ...))
+      if ((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || true)) || ...))
 #pragma GCC diagnostic pop
         return ret;
       else
