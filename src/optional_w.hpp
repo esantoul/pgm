@@ -7,6 +7,8 @@ template <typename Enum_t, Enum_t default_value = Enum_t{} >
 class info
 {
 public:
+  using E = Enum_t;
+
   constexpr info() : mE{} {}
 
   constexpr info(const Enum_t &v) : mE{v} {}
@@ -23,6 +25,7 @@ class info_descr : public info<Enum_t>
 {
 public:
   using info<Enum_t>::info;
+  using E = typename info<Enum_t>::E;
 
   constexpr info_descr(const info<Enum_t> &i)
     : info<Enum_t>{i}
@@ -58,44 +61,46 @@ template <typename El_t, typename Enum_t, Enum_t set_value, Enum_t default_value
 class optional_winfo
 {
 public:
-  constexpr optional_winfo() : mS{}, mZ{} {}
+  using E = Enum_t;
 
-  constexpr optional_winfo(const El_t &val) : mS{set_value}, mT{val} {}
+  constexpr optional_winfo() : mE{}, mZ{} {}
 
-  constexpr optional_winfo(const Enum_t &s) : mS{s}, mZ{} {}
+  constexpr optional_winfo(const El_t &val) : mE{set_value}, mT{val} {}
+
+  constexpr optional_winfo(const Enum_t &s) : mE{s}, mZ{} {}
 
   ~optional_winfo()
   {
-    if (mS == set_value)
+    if (mE == set_value)
       mT.~El_t();
   }
 
-  constexpr operator bool() const { return mS != default_value; }
-  constexpr Enum_t status() const { return mS; }
+  constexpr operator bool() const { return mE != default_value; }
+  constexpr Enum_t status() const { return mE; }
 
-  constexpr bool is_set() const { return mS == set_value; }
+  constexpr bool is_set() const { return mE == set_value; }
 
   constexpr El_t &value() { return mT; }
   constexpr El_t value_or(const El_t &other) const { return is_set() ? mT : other; }
 
   constexpr optional_winfo &operator=(const El_t &value)
   {
-    if (mS == set_value)
+    if (mE == set_value)
       mT.~El_t();
     mT = value;
-    mS = set_value;
+    mE = set_value;
     return *this;
   }
   constexpr optional_winfo &operator=(const Enum_t &s)
   {
-    if ((mS == set_value) && (s != set_value))
+    if ((mE == set_value) && (s != set_value))
       mT.~El_t();
-    mS = s;
+    mE = s;
     return *this;
   }
 
 private:
-  Enum_t mS;
+  Enum_t mE;
   union
   {
     El_t mT;
@@ -108,6 +113,7 @@ class optional_wdesc : public optional_winfo<El_t, Enum_t, set_value, default_va
 {
 public:
   using optional_winfo<El_t, Enum_t, set_value, default_value>::optional_winfo;
+  using E = typename optional_winfo<El_t, Enum_t, set_value, default_value>::E;
 
   constexpr optional_wdesc(const optional_winfo<El_t, Enum_t, set_value, default_value> &oi)
     : optional_winfo<El_t, Enum_t, set_value, default_value>{oi}
