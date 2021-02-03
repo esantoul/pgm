@@ -160,7 +160,7 @@ namespace pgm // Process Generation Model
     }
 
     std::tuple<Task_t...> mT;
-  };
+    };
 
   // Switcher definition
   template <typename Proto_t>
@@ -192,7 +192,9 @@ namespace pgm // Process Generation Model
     {
       Helper::ret_t<Proto_t> ret{};
       const Helper::cond_ret_t<CondFun_t, Proto_t> condition{std::apply(mCFun, args_tuple)};
-      if (((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || (true)))) || ...))
+#pragma GCC diagnostic ignored "-Wparentheses" // due to a bug in GCC versions < 9.3
+      if (((((mCVals[idx] == condition) && ((ret = std::apply(std::get<idx>(mCFuns), args_tuple)) || true))) || ...))
+#pragma GCC diagnostic pop
         return ret;
       else
         return std::apply(mDFun, args_tuple);
@@ -203,6 +205,6 @@ namespace pgm // Process Generation Model
     Helper::cond_ret_t<CondFun_t, Proto_t> mCVals[sizeof...(CaseFun_t)];
     std::tuple<CaseFun_t...> mCFuns;
   };
-} // namespace pgm
+  } // namespace pgm
 
 #endif // PGM_HPP
