@@ -26,7 +26,7 @@ namespace pgm // Process Generation Model
   template <typename Callable_t, typename Ret_t, typename... Args_t>
   struct is_condition<Callable_t, Ret_t(Args_t...)>
   {
-    using result_t = std::invoke_result_t<Callable_t, Args_t...>;
+    using result_t = std::decay_t<std::invoke_result_t<Callable_t, Args_t...>>;
     static constexpr bool value = std::is_invocable_v<Callable_t, Args_t...> && (std::is_integral_v<result_t> || std::is_enum_v<result_t>);
   };
 
@@ -38,7 +38,7 @@ namespace pgm // Process Generation Model
   template <typename Ret_t, typename ... Args_t>
   struct is_conditional_return<Ret_t(Args_t...)>
   {
-    static constexpr bool value = std::is_convertible_v<Ret_t, bool>;
+    static constexpr bool value = std::is_convertible_v<Ret_t, bool> && (std::is_copy_constructible_v<Ret_t> || std::is_move_constructible_v<Ret_t>) && std::is_default_constructible_v<Ret_t>;
   };
 
   template <typename Proto_t>
@@ -91,7 +91,7 @@ namespace pgm // Process Generation Model
     template <typename Callable_t, typename Ret_t, typename... Args>
     struct cond_ret<Callable_t, Ret_t(Args...)>
     {
-      using type = std::invoke_result_t<Callable_t, Args...>;
+      using type = std::decay_t<std::invoke_result_t<Callable_t, Args...>>;
     };
 
     template <typename Callable_t, typename Proto_t>
