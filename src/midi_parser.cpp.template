@@ -1,3 +1,13 @@
+/**
+ * @file midi_parser.cpp
+ * @author Etienne SANTOUL github.com/esantoul
+ * @brief Midi Parser implementation file
+ * @version 0.1
+ * @date 2021-02-04
+ *
+ * @copyright BSD 2-Clause License. Copyright (c) 2021, Etienne SANTOUL. All rights reserved.
+ */
+
 #include "midi_parser.hpp"
 
 constexpr ParseInfo MidiBytes::M1::NoteOff::method(const std::uint8_t *, std::size_t) { return {ParseInfo::E::UNIMPLEMENTED}; }

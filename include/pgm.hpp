@@ -1,6 +1,16 @@
 #ifndef PGM_HPP
 #define PGM_HPP
 
+/**
+ * @file pgm.hpp
+ * @author Etienne SANTOUL github.com/esantoul
+ * @brief Process Generation Model header file (Compiles w/ GCC 7.1+ & Clang 7.0+. Requires std=c++17 or above)
+ * @version 0.1
+ * @date 2021-02-04
+ *
+ * @copyright BSD 2-Clause License. Copyright (c) 2021, Etienne SANTOUL. All rights reserved.
+ */
+
 #include <tuple>
 #include <type_traits>
 

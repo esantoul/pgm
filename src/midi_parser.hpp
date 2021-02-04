@@ -1,12 +1,22 @@
 #ifndef MIDI_PARSER_HPP
 #define MIDI_PARSER_HPP
 
+/**
+ * @file midi_parser.hpp
+ * @author Etienne SANTOUL github.com/esantoul
+ * @brief
+ * @version 0.1
+ * @date 2021-02-04
+ *
+ * @copyright BSD 2-Clause License. Copyright (c) 2021, Etienne SANTOUL. All rights reserved.
+ */
+
 #include "info_types.hpp"
 #include "../include/pgm.hpp"
 #include <cstddef>
 #include <cstdint>
 
-// Switcher utility function for MIDI interpretation
+ // Switcher utility function for MIDI interpretation
 class SwitcherFactory
 {
 public:
