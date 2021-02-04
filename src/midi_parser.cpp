@@ -1,251 +1,740 @@
 #include "midi_parser.hpp"
 
-////////////////////////////////////////////////////////////////////////////////////
-//--------------------------------------------------------------------------------//
+#include <cstdio>
+#include <utility>
+#include <algorithm>
 
-//                                    EXAMPLES
+class glob_msg
+{
+public:
+  static constexpr std::size_t maxlen = 64;
 
-//--------------------------------------------------------------------------------//
-////////////////////////////////////////////////////////////////////////////////////
+  static void print() { printf("%s\n", mData); }
+
+  template <std::size_t N>
+  static constexpr void set(const char(&msg)[N])
+  {
+    for (std::size_t i = 0; i < std::min(N, maxlen - 1); ++i)
+      mData[i] = msg[i];
+  }
+
+private:
+  static char mData[maxlen];
+};
+char glob_msg::mData[]{};
+
+const std::uint8_t *glob_data = nullptr;
+std::size_t glob_len = 0;
+
+void prt_glob_data()
+{
+  while (glob_len--)
+    printf("%02X ", *glob_data++);
+  glob_data = nullptr;
+  glob_len = 0;
+  printf("\n");
+}
+
+constexpr ParseInfo MidiBytes::M1::NoteOff::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 NoteOff");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::NoteOn::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 NoteOn");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::PolyPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 PolyPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::ControlChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ControlChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::ProgramChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ProgramChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::ChannelPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ChannelPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::PitchBend::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 PitchBend");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpHeader::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SampleDumpHeader");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDataPacket::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SampleDataPacket");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpRequest::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SampleDumpRequest");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTimeCode::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MidiTimeCode");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpExtensions::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SampleDumpExtensions");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralInformation::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 GeneralInformation");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::FileDump::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 FileDump");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTuningStandard::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MidiTuningStandard");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralMidi::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 GeneralMidi");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::EndOfFile::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 EndOfFile");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Wait::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Wait");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Cancel::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Cancel");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::NAK::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 NAK");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::ACK::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ACK");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTimeCode::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MidiTimeCode");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::ShowControls::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ShowControls");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::NotationInfo::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 NotationInfo");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::DeviceControl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 DeviceControl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::RTMTCCue::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 RTMTCCue");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCCommands::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MMCCommands");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCResponse::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MMCResponse");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTuning::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MidiTuning");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::MTC::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 MTC");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::Songpos::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Songpos");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SongSel::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SongSel");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::TuneRequest::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 TuneRequest");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::TimingClock::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 TimingClock");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::Start::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Start");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::Continue::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Continue");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::Stop::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 Stop");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::ActiveSensing::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 ActiveSensing");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SystemReset::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M1 SystemReset");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+
+
+
+constexpr bool MidiBytes::M2::isMidi2Enabled() { return false; }
+
+constexpr ParseInfo MidiBytes::M2::Utility::NOOP::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 NOOP");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Utility::JRClock::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 JRClock");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Utility::JRTimestamp::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 JRTimestamp");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M2::System::MTC::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 MTC");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::SongPos::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SongPos");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::SongSel::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SongSel");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::TuneRequest::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 TuneRequest");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::TimingClock::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 TimingClock");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::Start::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 Start");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::Continue::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 Continue");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::Stop::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 Stop");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::ActiveSensing::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ActiveSensing");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::System::Reset::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 Reset");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::NoteOff::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 NoteOff");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::NoteOn::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 NoteOn");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::PolyPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PolyPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::ControlChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ControlChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::ProgramChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ProgramChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::ChannelPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ChannelPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi1Channel::PitchBend::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PitchBend");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M2::Data64Bits::SysEx1Packet::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysEx1Packet");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data64Bits::SysExStart::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysExStart");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data64Bits::SysExContinue::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysExContinue");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data64Bits::SysExEnd::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysExEnd");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::RegistPerNoteCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 RegistPerNoteCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::AssignPerNoteCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 AssignPerNoteCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::RegistCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 RegistCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::AssignCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 AssignCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::RelativeRegistCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 RelativeRegistCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::RelativeAssignCtrl::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 RelativeAssignCtrl");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::PerNotePitchBend::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PerNotePitchBend");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::NoteOff::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 NoteOff");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::NoteOn::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 NoteOn");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::PolyPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PolyPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::ControlChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ControlChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::ProgramChange::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ProgramChange");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::ChannelPressure::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 ChannelPressure");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::PitchBend::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PitchBend");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Midi2Channel::PerNoteManagement::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 PerNoteManagement");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::SysEx8In1Packet::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysEx8In1Packet");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::SysEx8Start::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysEx8Start");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::SysEx8Continue::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysEx8Continue");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::SysEx8End::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 SysEx8End");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::MixedDataSetHeader::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 MixedDataSetHeader");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+constexpr ParseInfo MidiBytes::M2::Data128Bits::MixedDataSetPayload::method(const std::uint8_t *bytes, std::size_t length)
+{
+  glob_msg::set("M2 MixedDataSetPayload");
+  glob_data = bytes;
+  glob_len = length;
+  return {ParseInfo::E::SUCCESS};
+}
+
+
+
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::specificMatchFunction(const std::uint8_t *&, std::size_t &) { return {ParseInfo::E::UNIMPLEMENTED}; }
+constexpr ParseInfo MidiBytes::M1::SystemMessage::SysEx::interpretSpecificSysEx(const std::uint8_t *, std::size_t) { return {ParseInfo::E::UNIMPLEMENTED}; }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <cstdio>
-void prtrem(const char *description, const uint8_t *bytes, std::size_t len)
-{
-  std::printf("%s\n", description);
-  for (std::size_t i = 0; i < len; ++i)
-    std::printf("%02X ", bytes[i]);
-  std::printf("\n");
-}
-
-PInfo MidiBytes::M1::NoteOn::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("NoteOn", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::NoteOff::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("NoteOff", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::PolyPressure::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("PolyPressure", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::ControlChange::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("ControlChange", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::ProgramChange::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<2>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("ProgramChange", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::ChannelPressure::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<2>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("ChannelPressure", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::PitchBend::method(const uint8_t *bytes, std::size_t length)
-{
-  if (!HasLength<3>(bytes, length))
-    return {PInfo::E::ERROR_UNADEQUATE_LENGTH};
-  prtrem("PitchBend", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpHeader::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SampleDumpHeader", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDataPacket::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SampleDataPacket", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpRequest::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SampleDumpRequest", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("NRT_MidiTimeCode", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::SampleDumpExtensions::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SampleDumpExtensions", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralInformation::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("GeneralInformation", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::FileDump::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("FileDump", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::MidiTuningStandard::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("MidiTuningStandard", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::GeneralMidi::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("GeneralMidi", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::EndOfFile::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("EndOfFile", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Wait::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Wait", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::Cancel::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Cancel", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::NAK::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("NAK", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniNonRT::ACK::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("ACK", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTimeCode::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("RT_MidiTimeCode", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::ShowControls::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("ShowControls", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::NotationInfo::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("NotationInfo", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::DeviceControl::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("DeviceControl", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::RTMTCCue::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("RTMTCCue", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCCommands::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("MMCCommands", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MMCResponse::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("MMCResponse", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::UniRT::MidiTuning::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("MidiTuning", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::MTC::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("MTC", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::Songpos::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Songpos", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SongSel::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SongSel", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::TuneRequest::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Tune", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::TimingClock::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Clock", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::Start::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Start", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::Continue::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Continue", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::Stop::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("Stop", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::ActiveSensing::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("ActiveSensing", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SystemReset::method(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("SystemReset", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-
-
-PInfo MidiBytes::M1::SystemMessage::SysEx::specificMatchFunction(const uint8_t *&bytes, std::size_t &length)
-{
-  prtrem("specificMatchFunction", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-PInfo MidiBytes::M1::SystemMessage::SysEx::interpretSpecificSysEx(const uint8_t *bytes, std::size_t length)
-{
-  prtrem("interpretSpecificSysEx", bytes, length);
-  return {PInfo::E::SUCCESS};
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 #include <cstring>
-#include <vector>
+#include "static_vector.h"
 #include <optional>
 
-std::optional<uint8_t> char2hex(signed char c)
+constexpr std::optional<uint8_t> char2hex(signed char c)
 {
   if (c >= 'a' && c <= 'f')
     c += 'A' - 'a';
@@ -257,7 +746,7 @@ std::optional<uint8_t> char2hex(signed char c)
     return {};
 }
 
-std::optional<uint8_t> parse2char(const char str[])
+constexpr std::optional<uint8_t> parse2char(const char str[])
 {
   auto mshB = char2hex(str[0]);
   auto lshB = char2hex(str[1]);
@@ -267,9 +756,9 @@ std::optional<uint8_t> parse2char(const char str[])
     return {};
 }
 
-std::optional<std::vector<uint8_t>> parse_args(const int argc, const char *argv[])
+constexpr std::optional<utils::StaticVector<uint8_t, 128>> parse_args(const int argc, const char *argv[])
 {
-  std::vector<uint8_t> bytes;
+  utils::StaticVector<uint8_t, 128> bytes;
   for (int i = 0; i < argc; ++i)
   {
     auto len = strlen(argv[i]);
@@ -300,7 +789,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char *argv[])
   // uint8_t bytes[] = {0x94, 0x40, 0x7F};
   uint8_t bytes[] = {0xF0, 0x7F, 0x69, 0x04, 0x01, 0x00, 0x00, 0xF7};
 
-  PInfo ret = MidiBytes::Interpret(bytes, sizeof(bytes));
+  ParseInfo ret = MidiBytes::Interpret(bytes, sizeof(bytes));
 
   /*/ // New version, message from call arguments such as "./program_name 94 3F 7F"
 
@@ -316,31 +805,57 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char *argv[])
     printf("%02X ", el);
   printf("\n");
 
-  PInfo ret = MidiBytes::Interpret(parsed.value().data(), parsed.value().size());
+
+  MidiSize sz = MidiBytes::Insight(parsed.value()[0]);
+
+  switch (sz.status())
+  {
+  case MidiSize::Status::Discard:
+    printf("Next %d bytes should be discarted\n", sz.value());
+    break;
+  case MidiSize::Status::Set:
+    printf("Next message size is %d bytes\n", sz.value());
+    break;
+  case MidiSize::Status::SysEx:
+    printf("Next message is a SysEx\n");
+    break;
+  case MidiSize::Status::Unknown:
+    printf("Unexpected byte!\n");
+    break;
+  case MidiSize::Status::Error:
+    printf("Unexpected ERROR!\n");
+    break;
+  }
+
+
+  ParseInfo ret = MidiBytes::Interpret(parsed.value().data(), parsed.value().size());
+
+  glob_msg::print();
+  prt_glob_data();
 
   //*/
 
   switch (ret.status())
   {
-  case PInfo::E::UNDEFINED:
+  case ParseInfo::E::UNDEFINED:
     printf("Undefined return status\n");
     break;
-  case PInfo::E::SUCCESS:
+  case ParseInfo::E::SUCCESS:
     printf("Message parsed successfully!\n");
     break;
-  case PInfo::E::UNIMPLEMENTED:
+  case ParseInfo::E::UNIMPLEMENTED:
     printf("Message type not implemented\n");
     break;
-  case PInfo::E::ERROR_MSG_TOO_SHORT:
+  case ParseInfo::E::ERROR_MSG_TOO_SHORT:
     printf("Error: Message is too short\n");
     break;
-  case PInfo::E::ERROR_UNADEQUATE_LENGTH:
+  case ParseInfo::E::ERROR_UNADEQUATE_LENGTH:
     printf("Error: Unadequate length\n");
     break;
-  case PInfo::E::ERROR_UNKNOWN:
+  case ParseInfo::E::ERROR_UNKNOWN:
     printf("Error: UNKNOWN\n");
     break;
-  case PInfo::E::ERROR_INVALID_CASE:
+  case ParseInfo::E::ERROR_INVALID_CASE:
     printf("Error: Invalid Case\n");
     break;
   }
