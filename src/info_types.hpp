@@ -1,6 +1,16 @@
 #ifndef INFO_TYPES_HPP
 #define INFO_TYPES_HPP
 
+/**
+ * @file info_types.hpp
+ * @author Etienne SANTOUL github.com/esantoul
+ * @brief Informative types header. Usable with pgm Process & Switcher
+ * @version 0.1
+ * @date 2021-02-04
+ *
+ * @copyright BSD 2-Clause License. Copyright (c) 2021, Etienne SANTOUL. All rights reserved.
+ */
+
 #include <algorithm>
 
 namespace utils
