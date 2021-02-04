@@ -1,7 +1,7 @@
 #ifndef MIDI_PARSER_HPP
 #define MIDI_PARSER_HPP
 
-#include "optional_w.hpp"
+#include "info_types.hpp"
 #include "../include/pgm.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -59,7 +59,7 @@ enum class PARSE_STATUS
   ERROR_INVALID_CASE,
 };
 
-using ParseInfo = info<PARSE_STATUS>;
+using ParseInfo = utils::info<PARSE_STATUS>;
 
 class MidiSize
 {

@@ -354,7 +354,7 @@ constexpr ParseInfo MidiBytes::M1::SystemMessage::SystemReset::method(const std:
 
 
 
-constexpr bool MidiBytes::M2::isMidi2Enabled() { return false; }
+constexpr bool MidiBytes::M2::isMidi2Enabled() { return true; }
 
 constexpr ParseInfo MidiBytes::M2::Utility::NOOP::method(const std::uint8_t *bytes, std::size_t length)
 {
